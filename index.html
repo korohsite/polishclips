@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polskie Klipy Twitcha</title>
+</head>
+<body>
+    <h1>Polskie klipy z Twitcha</h1>
+    <div id="clips-container"></div>
+
+    <script>
+        const clientId = "YOUR_CLIENT_ID"; // Zastąp tym, co otrzymałeś z Twitcha
+        const clientSecret = "YOUR_CLIENT_SECRET"; // Zastąp tym, co otrzymałeś z Twitcha
+        const redirectUri = "https://twojanazwa.github.io/polskie-klipy-twitcha/"; // URL z GitHub Pages
+
+        // Funkcja do autoryzacji na Twitchu
+        function authorize() {
+            const authUrl = `https://id.twitch.tv/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=clips:edit`;
+            window.location.href = authUrl;
+        }
+
+        // Sprawdzanie, czy otrzymaliśmy token z URL
+        const params = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = params.get('access_token');
+
+        if (accessToken) {
+            // Token został otrzymany, możemy teraz wyciągać klipy
+            fetchClips(accessToken);
+        } else {
+            // Jeśli nie ma tokena, uruchommy proces autoryzacji
+            authorize();
+        }
+
+        // Funkcja do pobrania najlepszych klipów z Twitcha
+        async function fetchClips(token) {
+            const res = await fetch("https://api.twitch.tv/helix/clips?first=100", {
+                headers: {
+                    "Client-ID": clientId,
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+            const data = await res.json();
+            const clips = data.data.filter(clip => clip.language === 'pl'); // Filtrowanie po języku polskim
+            displayClips(clips);
+        }
+
+        // Funkcja do wyświetlania klipów na stronie
+        function displayClips(clips) {
+            const container = document.getElementById('clips-container');
+            clips.forEach(clip => {
+                const clipElement = document.createElement('div');
+                clipElement
